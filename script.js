@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { type: 'IMAGE', url: 'assets/photos/536605522_1324390542635108_8855419695353112354_n.heic' },
         { type: 'IMAGE', url: 'assets/photos/552594129_17851441227554136_3272607357505550803_n.heic' },
         { type: 'IMAGE', url: 'assets/photos/622898839_17867368326554136_9008185039673851018_n.heic' },
+        { type: 'VIDEO', url: 'assets/videos/AQMEvgr8St-I02Ylk-h-kWIFCTqNEbgNt4OKh7FFqQWnDl_QzEAkgW63d-c7DKVGaP-GezVqkS2yLxaYECoY5IqVGUr1VmSBdlOV2Ec.mp4' },
         { type: 'VIDEO', url: 'assets/videos/AQMLRDOOPEVGyLojUi7yOHJA6EEGHyz2sKIMbWTT5r2CZ6M1Z5eFqepvMYtwt-23u9MDPY-w3UlSQ47T-p2XEWscnq9008fAQq4xH88.mp4' },
         { type: 'VIDEO', url: 'assets/videos/AQMRZNTBXhcjorPsnmLYBW9KeSCjXNn9abt5Rxr933FhjFb3dZDfy51NHUvUSvbP07R9itpD4FD0lhaIJuM-kG3tJwB0qjH8Ep2PLnY.mp4' },
         { type: 'VIDEO', url: 'assets/videos/AQMZFQmkET4m4XXJIt1ohvsNNyLuyImc-KqgsR6FW5ZQ29f-h0KQd38QQP4CcFfdu9YJr22ymzAQ817ivbO76FUXlSPTem1x_8vaT-o.mp4' },
