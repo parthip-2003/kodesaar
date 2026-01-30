@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script>
+        // --- ACCESS CONTROL SHIELD ---
+        if (localStorage.getItem('kodesaar_auth') !== 'true') {
+            window.location.replace('login.html'); // Use replace to prevent back-looping
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KODESAAR | Premium Personal Brand</title>
+    <link rel="icon" type="image/png" href="assets/brand_logo.png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+</head>
+
+<body class="dark-theme">
+    <div class="cursor"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-logo">
+            <img src="assets/brand_logo.png" alt="Kodesaar Logo">
+        </div>
+        <ul class="nav-menu">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#gallery">Moments</a></li>
+            <li><a href="#members">Members</a></li>
+            <li><a href="#contact">Connect</a></li>
+            <li id="auth-link">
+                <script>
+                    const user = localStorage.getItem('kodesaar_user');
+                    if (user) {
+                        document.write(`<a href="#" onclick="localStorage.clear(); location.reload();" class="nav-login-btn">Logout (${user})</a>`);
+                    } else {
+                        document.write(`<a href="login.html" class="nav-login-btn">Login</a>`);
+                    }
+                </script>
+            </li>
+        </ul>
+        <div class="nav-socials">
+            <a href="https://www.instagram.com/kodesaarofficial.mca?igsh=azEydmwwbzhvMG5n" target="_blank"><i
+                    class="fab fa-instagram"></i></a>
+            <a href="#" target="_blank"><i class="fab fa-whatsapp"></i></a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <div class="logo-container animate-fade-in">
+                <img src="assets/brand_logo.png" alt="Kodesaar" class="main-logo">
+            </div>
+            <h1 class="brand-name animate-slide-up">KODESAAR</h1>
+            <p id="hero-tagline" class="tagline animate-slide-up">കോഡ്സാർ 🗿</p>
+            <script>
+                const heroUser = localStorage.getItem('kodesaar_user');
+                if (heroUser) {
+                    document.getElementById('hero-tagline').innerHTML = `WELCOME, ${heroUser.toUpperCase()} ⚜️`;
+                }
+            </script>
+            <div class="hero-btns animate-slide-up">
+                <a href="#about" class="btn primary">Explore</a>
+                <a href="#contact" class="btn secondary">Contact</a>
+            </div>
+        </div>
+        <div class="hero-gradient"></div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <div class="about-grid">
+                <div class="about-text">
+                    <h2 class="section-title">The Legend</h2>
+                    <div class="bio-content">
+                        <h3 class="highlight">2025-2027 കാലഘട്ടം ⚜️</h3>
+                        <p class="description">
+                            KODESAAR is a playground for visual excellence, dedicated to capturing life’s finest moments
+                            through a distinct and sophisticated lens. We transform abstract visions into a refined
+                            reality,
+                            meticulously building a legacy that is designed to endure. Our journey is a relentless
+                            pursuit
+                            of perfection, blending the raw intensity of the moment with the timeless elegance of elite
+                            artistry.
+                        </p>
+                    </div>
+                </div>
+                <div class="about-stats">
+                    <div class="stat-card">
+                        <span class="stat-number">20</span>
+                        <span class="stat-label">Stories</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">84</span>
+                        <span class="stat-label">Followers</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">Premium</span>
+                        <span class="stat-label">Identity</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section (Moments) -->
+    <section id="gallery" class="gallery">
+        <div class="container">
+            <h2 class="section-title centered">Gallery</h2>
+            <div class="gallery-grid">
+                <div class="gallery-item large">
+                    <img src="assets/post1.png" alt="Moment 1">
+                </div>
+                <div class="gallery-item">
+                    <img src="assets/post2.png" alt="Moment 2">
+                </div>
+                <div class="gallery-item">
+                    <img src="assets/post3.png" alt="Moment 3">
+                </div>
+                <div class="gallery-item tall">
+                    <img src="assets/profile.png" alt="Moment 4">
+                </div>
+                <div class="gallery-item">
+                    <img src="assets/post1.png" alt="Moment 5">
+                </div>
+                <div class="gallery-item">
+                    <img src="assets/post2.png" alt="Moment 6">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Members Section -->
+    <section id="members" class="members">
+        <div class="container">
+            <h2 class="section-title centered">Our Members</h2>
+            <div class="members-grid">
+                <div class="member-card">
+                    <div class="member-img">
+                        <img src="assets/members/member1.jpeg" alt="Abinson Babu">
+                    </div>
+                    <div class="member-info">
+                        <h3>Abinson Babu</h3>
+                    </div>
+                </div>
+                <div class="member-card">
+                    <div class="member-img">
+                        <img src="assets/members/member2.jpeg" alt="Athul Murali">
+                    </div>
+                    <div class="member-info">
+                        <h3>Athul Murali</h3>
+                    </div>
+                </div>
+                <div class="member-card">
+                    <div class="member-img">
+                        <img src="assets/members/member3.jpeg" alt="Parthip Sasidharan">
+                    </div>
+                    <div class="member-info">
+                        <h3>Parthip Sasidharan</h3>
+                    </div>
+                </div>
+                <div class="member-card">
+                    <div class="member-img">
+                        <img src="assets/members/member4.jpeg" alt="Sanjay S A">
+                    </div>
+                    <div class="member-info">
+                        <h3>Sanjay S A</h3>
+                    </div>
+                </div>
+                <div class="member-card">
+                    <div class="member-img">
+                        <img src="assets/members/member5.jpeg" alt="Saroj S">
+                    </div>
+                    <div class="member-info">
+                        <h3>Saroj S</h3>
+                    </div>
+                </div>
+                <div class="member-card">
+                    <div class="member-img">
+                        <img src="assets/members/member6.jpeg" alt="Sabin Kuriakose">
+                    </div>
+                    <div class="member-info">
+                        <h3>Sabin Kuriakose</h3>
+                    </div>
+                </div>
+                <div class="member-card">
+                    <div class="member-img">
+                        <img src="assets/members/member7.jpeg" alt="Shijil C B">
+                    </div>
+                    <div class="member-info">
+                        <h3>Shijil C B</h3>
+                    </div>
+                </div>
+                <div class="member-card">
+                    <div class="member-img">
+                        <img src="assets/members/member 8.jpeg" alt="Nikson Santhosh">
+                    </div>
+                    <div class="member-info">
+                        <h3>Nikson Santhosh</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <div class="contact-card">
+                <h2>Ready to Connect?</h2>
+                <p>Send a message or find us on social media.</p>
+
+                <form id="contact-form" class="contact-form">
+                    <div class="form-row">
+                        <div class="input-group">
+                            <input type="text" id="contact-name" placeholder="Your Name" required>
+                        </div>
+                        <div class="input-group">
+                            <input type="email" id="contact-email" placeholder="Your Email" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <textarea id="contact-message" placeholder="Your Message" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="btn primary send-btn">
+                        <span>Send Message</span>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+
+                <div class="contact-divider">
+                    <span>OR</span>
+                </div>
+
+                <div class="contact-links">
+                    <a href="https://wa.me/917306008137" class="premium-btn whatsapp">
+                        <i class="fab fa-whatsapp"></i>
+                        <span>WhatsApp</span>
+                    </a>
+                    <a href="https://www.instagram.com/kodesaarofficial.mca?igsh=azEydmwwbzhvMG5n" target="_blank"
+                        class="premium-btn instagram">
+                        <i class="fab fa-instagram"></i>
+                        <span>Instagram</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-logo">KODESAAR</div>
+        <p class="copyright">© 2026 KODESAAR. THE GOLD STANDARD.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
