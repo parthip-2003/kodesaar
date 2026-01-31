@@ -398,19 +398,21 @@
             if (tabId === 'gallery') loadGallery();
         }
 
-        // AUTH CHECK
-        async function checkAdmin() {
-            // Check for the special Admin Token set by login.html
-            const isAdmin = localStorage.getItem('kodesaar_admin') === 'true';
-
-            if (!isAdmin) {
-                alert('ACCESS DENIED: You are not the admin!');
-                window.location.href = 'index.html';
+        // AUTH CHECK (Immediate Execution)
+        function checkAdmin() {
+            if (localStorage.getItem('kodesaar_admin') !== 'true') {
+                window.location.replace('login.html');
                 return;
             }
-
             document.getElementById('admin-user').innerText = 'Admin Access Granted';
         }
+        checkAdmin();
+
+        // NAVIGATION LOCK: Prevents leaving via 'Back' button accidentally
+        history.pushState(null, null, location.href);
+        window.onpopstate = function () {
+            history.pushState(null, null, location.href);
+        };
 
         // LOAD MESSAGES
         async function loadMessages() {
@@ -600,7 +602,6 @@
         }
 
         // Init
-        checkAdmin();
         loadMessages();
 
         // LIVE AUTO-REFRESH (Every 5 seconds)
