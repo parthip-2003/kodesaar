@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kodesaar System Diagnostic</title>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            background: #111;
+            color: #eee;
+            font-family: monospace;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #D4AF37;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .test-box {
+            background: #222;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        .test-box h3 {
+            margin-top: 0;
+            color: #fff;
+        }
+
+        .status {
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .success {
+            color: #0f0;
+        }
+
+        .error {
+            color: #f00;
+        }
+
+        .pending {
+            color: #fb0;
+        }
+
+        button {
+            background: #D4AF37;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background: #fff;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            background: #333;
+            color: #fff;
+            border: 1px solid #444;
+            margin-bottom: 10px;
+        }
+
+        pre {
+            background: #000;
+            padding: 10px;
+            border: 1px solid #333;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🛠️ System Diagnostic Tool</h1>
+
+        <div class="test-box">
+            <h3>1. Configuration</h3>
+            <p>Verify these are your correct Supabase credentials.</p>
+            <label>Supabase URL:</label>
+            <input type="text" id="url" value="https://vskalrepzuzaneglzdez.supabase.co">
+            <label>Supabase Anon Key:</label>
+            <input type="text" id="key" value="sb_publishable_aWd31fqNw-4w6Dwk-sD8CQ_umT2tBhZ">
+            <button onclick="runTests()">RUN DIAGNOSTIC</button>
+        </div>
+
+        <div class="test-box">
+            <h3>2. Connection Test <span id="status-conn" class="status pending">WAITING</span></h3>
+            <div id="log-conn"></div>
+        </div>
+
+        <div class="test-box">
+            <h3>3. Write Test (Insert Message) <span id="status-write" class="status pending">WAITING</span></h3>
+            <div id="log-write"></div>
+        </div>
+
+        <div class="test-box">
+            <h3>4. Read Test (Fetch Messages) <span id="status-read" class="status pending">WAITING</span></h3>
+            <div id="log-read"></div>
+        </div>
+    </div>
+
+    <script>
+        async function runTests() {
+            const url = document.getElementById('url').value;
+            const key = document.getElementById('key').value;
+            const client = supabase.createClient(url, key);
+
+            // 1. CONNECTION
+            updateStatus('conn', 'RUNNING', 'Running...');
+            try {
+                // Try to fetch table info/count
+                const { count, error } = await client.from('users').select('*', { count: 'exact', head: true });
+
+                if (error) throw error;
+
+                updateStatus('conn', 'SUCCESS', 'Connected to Supabase successfully.');
+            } catch (e) {
+                updateStatus('conn', 'ERROR', `Connection Failed: ${e.message}\nHint: Check URL and Key.`);
+                return; // Stop if connection fails
+            }
+
+            // 2. WRITE
+            updateStatus('write', 'RUNNING', 'Attempting to insert test message...');
+            const testId = 'TEST_' + Date.now();
+            try {
+                const { error } = await client.from('messages').insert([{
+                    name: 'Diagnostic Bot',
+                    email: 'bot@kodesaar.diagnosis',
+                    message: `Diagnostic Test ID: ${testId}`
+                }]);
+
+                if (error) throw error;
+
+                updateStatus('write', 'SUCCESS', `Write Successful! Inserted ID: ${testId}`);
+            } catch (e) {
+                updateStatus('write', 'ERROR', `Write Failed: ${e.message}\nHint: RLS Policy for INSERT might be blocking.`);
+                // Continue to read test anyway
+            }
+
+            // 3. READ
+            updateStatus('read', 'RUNNING', 'Reading back messages...');
+            try {
+                const { data, error } = await client.from('messages').select('*').order('created_at', { ascending: false }).limit(5);
+
+                if (error) throw error;
+
+                if (data.length === 0) {
+                    updateStatus('read', 'ERROR', 'Read Successful but returned 0 rows.\nNote: Verify if Write actually worked or if Select policy is filtering.');
+                } else {
+                    const found = data.find(m => m.message.includes(testId));
+                    if (found) {
+                        updateStatus('read', 'SUCCESS', `Read Successful! Found the test message.\nData Dump: ${JSON.stringify(data, null, 2)}`);
+                    } else {
+                        updateStatus('read', 'WARNING', `Read worked but didn't find the new message immediately (Replication lag?).\nData: ${JSON.stringify(data, null, 2)}`);
+                    }
+                }
+
+            } catch (e) {
+                updateStatus('read', 'ERROR', `Read Failed: ${e.message}\nHint: RLS Policy for SELECT might be blocking.`);
+            }
+        }
+
+        function updateStatus(id, type, msg) {
+            const el = document.getElementById('status-' + id);
+            const log = document.getElementById('log-' + id);
+            el.className = 'status ' + type.toLowerCase();
+            el.innerText = type;
+            log.innerHTML = `<pre>${msg}</pre>`;
+        }
+    </script>
+</body>
+
+</html>

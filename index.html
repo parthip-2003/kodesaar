@@ -19,9 +19,148 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
         rel="stylesheet">
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        // Inline Supabase Config
+        const SUPABASE_URL = 'https://vskalrepzuzaneglzdez.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_aWd31fqNw-4w6Dwk-sD8CQ_umT2tBhZ';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    </script>
+
+    <style>
+        /* --- 3D & GLASSPHORISM OVERRIDES --- */
+
+        /* 1. Background Setup */
+        body {
+            background-color: #000;
+            /* Fallback */
+            overflow-x: hidden;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, #111 0%, #000 100%);
+        }
+
+        /* 2. Glass Cards & Sections */
+        .navbar {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .hero-content {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+        }
+
+        /* About Section Glass */
+        .about {
+            background: transparent !important;
+            /* Let 3D show through */
+        }
+
+        .about-text,
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            background: rgba(212, 175, 55, 0.1);
+            transform: translateY(-5px);
+            border-color: var(--gold);
+        }
+
+        /* Gallery/Team Glass */
+        .gallery-item,
+        .member-card {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        .member-info {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        /* Contact Glass */
+        .contact-card {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .input-group input,
+        .input-group textarea {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--gold);
+        }
+
+        /* Footer Glass */
+        .footer {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* 3D Animated Icons for Navbar */
+        .nav-menu a {
+            perspective: 1000px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-icon {
+            font-size: 1.1em;
+            color: var(--gold);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: inline-block;
+            text-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .nav-menu a:hover .nav-icon {
+            transform: rotateY(180deg) scale(1.2);
+            color: #fff;
+            text-shadow: 0 0 10px var(--gold);
+        }
+
+        .nav-menu a:hover {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8),
+                0 0 10px rgba(212, 175, 55, 0.6);
+            transform: translateZ(20px);
+        }
+    </style>
 </head>
 
 <body class="dark-theme">
+    <!-- 3D Background Layer -->
+    <div id="canvas-container"></div>
     <div class="cursor"></div>
 
     <!-- Navigation -->
@@ -30,19 +169,35 @@
             <img src="assets/brand_logo.png" alt="Kodesaar Logo">
         </div>
         <ul class="nav-menu">
-            <li><a href="#home">Home</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#gallery">Moments</a></li>
-            <li><a href="#members">Team</a></li>
-            <li><a href="#contact">Connect</a></li>
+            <li><a href="#home"><i class="fas fa-home nav-icon"></i>Home</a></li>
+            <li><a href="#about"><i class="fas fa-crown nav-icon"></i>Legend</a></li>
+            <li><a href="#gallery"><i class="fas fa-camera-retro nav-icon"></i>Moments</a></li>
+            <li><a href="#members"><i class="fas fa-users nav-icon"></i>Team</a></li>
+            <li><a href="#contact"><i class="fas fa-paper-plane nav-icon"></i>Connect</a></li>
             <li id="auth-link">
                 <script>
-                    const user = localStorage.getItem('kodesaar_user');
-                    if (user) {
-                        document.write(`<a href="#" onclick="localStorage.clear(); location.reload();" class="nav-login-btn">Logout (${user})</a>`);
-                    } else {
-                        document.write(`<a href="login.html" class="nav-login-btn">Login</a>`);
+                    const authLink = document.getElementById('auth-link');
+                    async function updateAuthUI() {
+                        const localUser = localStorage.getItem('kodesaar_user');
+                        if (localUser) {
+                            authLink.innerHTML = `<a href="#" onclick="logout()"><i class="fas fa-sign-out-alt nav-icon"></i>Logout (${localUser})</a>`;
+                        } else {
+                            const { data: { session } } = await supabaseClient.auth.getSession();
+                            if (session) {
+                                authLink.innerHTML = `<a href="#" onclick="logout()"><i class="fas fa-sign-out-alt nav-icon"></i>Logout (${session.user.email})</a>`;
+                            } else {
+                                authLink.innerHTML = `<a href="login.html" class="login-btn-nav"><i class="fas fa-sign-in-alt nav-icon"></i>Login</a>`;
+                            }
+                        }
                     }
+
+                    async function logout() {
+                        await supabaseClient.auth.signOut();
+                        localStorage.removeItem('kodesaar_auth');
+                        localStorage.removeItem('kodesaar_user');
+                        window.location.href = 'login.html';
+                    }
+                    updateAuthUI();
                 </script>
             </li>
         </ul>
@@ -54,7 +209,7 @@
     </nav>
 
     <!-- Hero Section -->
-    <section id="home" class="hero">
+    <section id="home" class="hero" style="background: transparent;">
         <div class="hero-content">
             <div class="logo-container animate-fade-in">
                 <img src="assets/brand_logo.png" alt="Kodesaar" class="main-logo">
@@ -72,7 +227,7 @@
                 <a href="#contact" class="btn secondary">Contact</a>
             </div>
         </div>
-        <div class="hero-gradient"></div>
+        <!-- Removed static hero-gradient to show 3D BG -->
     </section>
 
     <!-- About Section -->
@@ -115,25 +270,12 @@
     <!-- Gallery Section (Moments) -->
     <section id="gallery" class="gallery">
         <div class="container">
-            <h2 class="section-title centered">Gallery</h2>
+            <h2 class="section-title centered" style="text-shadow: 0 0 10px #000;">Gallery</h2>
             <div class="gallery-grid">
-                <div class="gallery-item large">
-                    <img src="assets/post1.png" alt="Moment 1">
-                </div>
-                <div class="gallery-item">
-                    <img src="assets/post2.png" alt="Moment 2">
-                </div>
-                <div class="gallery-item">
-                    <img src="assets/post3.png" alt="Moment 3">
-                </div>
-                <div class="gallery-item tall">
-                    <img src="assets/profile.png" alt="Moment 4">
-                </div>
-                <div class="gallery-item">
-                    <img src="assets/post1.png" alt="Moment 5">
-                </div>
-                <div class="gallery-item">
-                    <img src="assets/post2.png" alt="Moment 6">
+                <div id="gallery-loader"
+                    style="text-align:center; color:var(--gold); grid-column: 1/-1; padding: 20px;">
+                    <h3 style="margin-bottom:10px;">Retrieving Visual Data...</h3>
+                    <i class="fas fa-circle-notch fa-spin" style="font-size: 2em;"></i>
                 </div>
             </div>
         </div>
@@ -142,7 +284,7 @@
     <!-- Team Section -->
     <section id="members" class="members">
         <div class="container">
-            <h2 class="section-title centered">Our Team</h2>
+            <h2 class="section-title centered" style="text-shadow: 0 0 10px #000;">Our Team</h2>
             <div class="members-grid">
                 <div class="member-card">
                     <div class="member-img">
@@ -221,20 +363,85 @@
 
                 <form id="contact-form" class="contact-form">
                     <div class="form-row">
-                        <div class="input-group">
+                        <div class="input-group 3d-field">
+                            <i class="fas fa-user input-icon"></i>
                             <input type="text" id="contact-name" placeholder="Your Name" required>
                         </div>
-                        <div class="input-group">
+                        <div class="input-group 3d-field">
+                            <i class="fas fa-envelope input-icon"></i>
                             <input type="email" id="contact-email" placeholder="Your Email" required>
                         </div>
                     </div>
-                    <div class="input-group">
+                    <div class="input-group 3d-field">
+                        <i class="fas fa-comment-alt input-icon"></i>
                         <textarea id="contact-message" placeholder="Your Message" rows="5" required></textarea>
                     </div>
                     <button type="submit" class="btn primary send-btn">
                         <span>Send Message</span>
                         <i class="fas fa-paper-plane"></i>
                     </button>
+
+                    <style>
+                        /* 3D Input Fields Styling */
+                        .input-group.3d-field {
+                            position: relative;
+                            margin-bottom: 20px;
+                        }
+
+                        .input-icon {
+                            position: absolute;
+                            left: 15px;
+                            top: 50%;
+                            /* Center vertically for inputs */
+                            transform: translateY(-50%);
+                            color: var(--gold);
+                            z-index: 2;
+                            font-size: 1.1em;
+                            text-shadow: 0 0 5px rgba(212, 175, 55, 0.5);
+                            pointer-events: none;
+                            /* Let clicks pass through */
+                        }
+
+                        /* Special handling for textarea icon */
+                        .input-group.3d-field textarea+.input-icon,
+                        .input-group.3d-field:has(textarea) .input-icon {
+                            top: 20px;
+                            transform: none;
+                        }
+
+                        .contact-form input,
+                        .contact-form textarea {
+                            width: 100%;
+                            padding: 15px 15px 15px 45px;
+                            /* Space for icon */
+                            background: rgba(0, 0, 0, 0.6);
+                            border: 1px solid rgba(212, 175, 55, 0.3);
+                            border-radius: 12px;
+                            color: #fff;
+                            font-family: 'Inter', sans-serif;
+
+                            /* 3D Depth Effect */
+                            box-shadow: inset 2px 2px 8px rgba(0, 0, 0, 0.8),
+                                inset -1px -1px 3px rgba(255, 255, 255, 0.05),
+                                0 5px 15px rgba(0, 0, 0, 0.3);
+                            transition: all 0.3s ease;
+                        }
+
+                        .contact-form input:focus,
+                        .contact-form textarea:focus {
+                            outline: none;
+                            border-color: var(--gold);
+                            background: rgba(0, 0, 0, 0.8);
+                            box-shadow: inset 1px 1px 5px rgba(0, 0, 0, 0.9),
+                                0 0 15px rgba(212, 175, 55, 0.3);
+                            transform: translateY(-2px);
+                        }
+
+                        .contact-form input::placeholder,
+                        .contact-form textarea::placeholder {
+                            color: #666;
+                        }
+                    </style>
                 </form>
 
                 <div class="contact-divider">
@@ -261,6 +468,72 @@
         <p class="copyright">© 2026 KODESAAR. THE GOLD STANDARD.</p>
     </footer>
 
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // --- 3D PARTICLE SYSTEM (GOLD DUST) ---
+        let scene, camera, renderer, particles;
+        let mouseX = 0, mouseY = 0;
+
+        function init3D() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            const geometry = new THREE.BufferGeometry();
+            const count = 3500; // Balanced density
+            const positions = new Float32Array(count * 3);
+
+            for (let i = 0; i < count * 3; i++) {
+                positions[i] = (Math.random() - 0.5) * 20; // Wide spread
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.025,
+                color: 0xD4AF37, // Gold Color
+                transparent: true,
+                opacity: 0.7,
+                blending: THREE.AdditiveBlending
+            });
+
+            particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+
+            camera.position.z = 5;
+
+            document.addEventListener('mousemove', (event) => {
+                mouseX = (event.clientX - window.innerWidth / 2) / 100;
+                mouseY = (event.clientY - window.innerHeight / 2) / 100;
+            });
+        }
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            particles.rotation.y += 0.0015;
+            particles.rotation.x += 0.0005;
+
+            particles.rotation.x += (mouseY * 0.05 - particles.rotation.x) * 0.05;
+            particles.rotation.y += (mouseX * 0.05 - particles.rotation.y) * 0.05;
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        init3D();
+        animate3D();
+    </script>
+
+    <!-- Main Script -->
     <script src="script.js"></script>
 </body>
 

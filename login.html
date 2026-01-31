@@ -16,6 +16,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&display=swap"
         rel="stylesheet">
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        // Inline Supabase Config
+        const SUPABASE_URL = 'https://vskalrepzuzaneglzdez.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_aWd31fqNw-4w6Dwk-sD8CQ_umT2tBhZ';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    </script>
 </head>
 
 <body>
@@ -38,11 +48,17 @@
                     <i class="fas fa-envelope"></i>
                     <input type="email" id="email" placeholder="Email Address" required>
                 </div>
+                <!-- Password removed for Visitors -->
+
                 <button type="submit" class="login-btn">
                     <span>Login</span>
                     <i class="fas fa-arrow-right"></i>
                 </button>
             </form>
+
+            <div style="margin-top: 20px; text-align: center;">
+                <button id="admin-mode-btn">Admin Login</button>
+            </div>
 
         </div>
     </div>
@@ -111,17 +127,100 @@
         init();
         animate();
 
-        // --- LOGIN REDIRECT ---
-        document.querySelector('.login-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = document.getElementById('name').value;
+        // --- LOGIN MANAGER ---
+        const form = document.querySelector('.login-form');
+        let isAdminMode = false;
 
+        // Toggle Admin Mode
+        document.getElementById('admin-mode-btn').addEventListener('click', () => {
+            isAdminMode = !isAdminMode;
+            const btn = document.querySelector('.login-btn');
+            const toggleBtn = document.getElementById('admin-mode-btn');
+
+            if (isAdminMode) {
+                // Switch to Admin
+                // Remove Name, Add Password
+                document.getElementById('name').parentElement.style.display = 'none';
+                document.getElementById('name').required = false;
+
+                if (!document.getElementById('password')) {
+                    const passGroup = document.createElement('div');
+                    passGroup.className = 'input-group';
+                    passGroup.innerHTML = '<i class="fas fa-lock"></i><input type="password" id="password" placeholder="Admin Password" required>';
+                    form.insertBefore(passGroup, btn);
+                } else {
+                    document.getElementById('password').parentElement.style.display = 'block';
+                    document.getElementById('password').required = true;
+                }
+
+                btn.querySelector('span').innerText = 'Admin Login';
+                toggleBtn.innerText = 'Back to Visitor Access';
+            } else {
+                // Switch to Visitor
+                document.getElementById('name').parentElement.style.display = 'block';
+                document.getElementById('name').required = true;
+
+                if (document.getElementById('password')) {
+                    document.getElementById('password').parentElement.style.display = 'none';
+                    document.getElementById('password').required = false;
+                }
+
+                btn.querySelector('span').innerText = 'Login';
+                toggleBtn.innerText = 'Admin Login';
+            }
+        });
+
+        // Submit Logic
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.querySelector('.login-btn');
+            const email = document.getElementById('email').value.toLowerCase();
+
+            // --- ADMIN LOGIN ---
+            if (isAdminMode) {
+                const password = document.getElementById('password').value;
+                // Removed 'Entering...' feedback
+
+                // Hardcoded Check as requested
+                if (email === 'kodesaarmca@gmail.com' && password === 'pathu@2003') {
+                    localStorage.setItem('kodesaar_auth', 'true');
+                    localStorage.setItem('kodesaar_admin', 'true'); // SPECIAL ADMIN TOKEN
+                    localStorage.setItem('kodesaar_user', 'Admin');
+
+                    window.location.href = 'admin.html';
+                } else {
+                    alert('Invalid Admin Credentials!');
+                    btn.innerHTML = '<span>Admin Login</span> <i class="fas fa-arrow-right"></i>';
+                }
+                return;
+            }
+
+            // --- VISITOR LOGIN ---
+            const name = document.getElementById('name').value;
+            // Removed 'Entering...' feedback and disabling logic
+
+            // 1. Set Session
             localStorage.setItem('kodesaar_auth', 'true');
             localStorage.setItem('kodesaar_user', name);
+            localStorage.removeItem('kodesaar_admin'); // Ensure not admin
 
-            setTimeout(() => {
+            try {
+                // 2. Track Visitor
+                const { error } = await supabaseClient
+                    .from('users')
+                    .insert([{
+                        name: name,
+                        email: email,
+                        last_login: new Date().toISOString()
+                    }]);
+
+                if (error) console.warn('Tracking skipped:', error.message);
+            } catch (err) {
+                console.warn('Tracking skipped:', err);
+            } finally {
+                // 3. Redirect
                 window.location.href = 'index.html';
-            }, 300);
+            }
         });
     </script>
 </body>

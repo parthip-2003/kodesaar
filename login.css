@@ -179,3 +179,19 @@ p {
         padding: 40px 25px;
     }
 }
+
+#admin-mode-btn {
+    background: none;
+    border: none;
+    color: #555;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: all 0.3s ease;
+}
+
+#admin-mode-btn:hover {
+    color: var(--gold);
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+    transform: scale(1.05);
+}

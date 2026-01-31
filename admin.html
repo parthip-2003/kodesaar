@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kodesaar Admin | Command Center</title>
+    <link rel="icon" type="image/png" href="assets/brand_logo.png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        // Inline Supabase Config to ensure loading
+        const SUPABASE_URL = 'https://vskalrepzuzaneglzdez.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_aWd31fqNw-4w6Dwk-sD8CQ_umT2tBhZ';
+
+        // Initialize immediately
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    </script>
+
+    <style>
+        /* 3D Background Container */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+        }
+
+        .admin-container {
+            padding: 100px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Glassmorphism Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+            /* Transparent Gold */
+            padding-bottom: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        h1 {
+            color: var(--gold);
+            font-family: var(--font-heading);
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+            margin: 0;
+        }
+
+        /* Glass Cards */
+        .message-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .message-card:hover {
+            border-color: var(--gold);
+            transform: translateY(-5px) scale(1.01);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 25px rgba(212, 175, 55, 0.15);
+        }
+
+        .msg-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            color: #aaa;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 10px;
+        }
+
+        .msg-name {
+            color: var(--gold);
+            font-weight: bold;
+            font-size: 1.2em;
+            letter-spacing: 0.5px;
+        }
+
+        .msg-body {
+            color: #eee;
+            line-height: 1.6;
+            font-weight: 300;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(45deg, transparent 50%, var(--gold) 50%);
+            background-size: 200% 100%;
+            background-position: left bottom;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 10px 25px;
+            cursor: pointer;
+            border-radius: 30px;
+            transition: all 0.4s ease;
+            font-family: var(--font-body);
+            text-transform: uppercase;
+            font-size: 0.8em;
+            letter-spacing: 1px;
+        }
+
+        .refresh-btn:hover {
+            background-position: right bottom;
+            color: #000;
+            box-shadow: 0 0 15px var(--gold);
+        }
+
+        .delete-btn {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid rgba(255, 0, 0, 0.4);
+            color: #ff4444;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: #ff4444;
+            color: white;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.4);
+        }
+
+        /* Navigation Tabs */
+        .admin-nav {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 50px;
+            backdrop-filter: blur(5px);
+            width: fit-content;
+        }
+
+        .nav-tab {
+            background: transparent;
+            color: #888;
+            border: none;
+            font-size: 1em;
+            cursor: pointer;
+            padding: 10px 25px;
+            border-radius: 25px;
+            transition: all 0.3s;
+        }
+
+        .nav-tab.active {
+            background: var(--gold);
+            color: #000;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+        }
+
+        /* Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 15px;
+            color: var(--gold);
+            text-transform: uppercase;
+            font-size: 0.8em;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .data-table td {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            color: #ddd;
+        }
+
+        .data-table td:first-child {
+            border-radius: 10px 0 0 10px;
+        }
+
+        .data-table td:last-child {
+            border-radius: 0 10px 10px 0;
+        }
+
+        .data-table tr:hover td {
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.01);
+        }
+
+        /* Upload Box */
+        .upload-box {
+            border: 2px dashed rgba(212, 175, 55, 0.3);
+            padding: 50px;
+            text-align: center;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .upload-box:hover {
+            border-color: var(--gold);
+            background: rgba(212, 175, 55, 0.05);
+            transform: scale(1.02);
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="dark-theme">
+    <div id="canvas-container"></div>
+    <div class="cursor"></div>
+
+    <div class="admin-container">
+        <div class="header">
+            <h1><i class="fas fa-shield-alt"></i> Kodesaar Admin</h1>
+            <div>
+                <span id="admin-user" style="margin-right: 15px; color: #aaa; font-style:italic;"></span>
+                <button onclick="logout()" class="refresh-btn">Shutdown Session</button>
+            </div>
+        </div>
+
+        <div class="admin-nav">
+            <button class="nav-tab active" onclick="switchTab('messages')"><i class="fas fa-envelope"></i>
+                Messages</button>
+            <button class="nav-tab" onclick="switchTab('users')"><i class="fas fa-users"></i> Users</button>
+            <button class="nav-tab" onclick="switchTab('gallery')"><i class="fas fa-images"></i> Media</button>
+        </div>
+
+        <!-- MESSAGES SECTION -->
+        <div id="messages" class="section active">
+            <div id="messages-list">Loading secure connection...</div>
+        </div>
+
+        <!-- USERS SECTION -->
+        <div id="users" class="section">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Access Name</th>
+                        <th>Email Identity</th>
+                        <th>Last Access</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="users-list">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- GALLERY SECTION -->
+        <div id="gallery" class="section">
+            <div class="upload-box" onclick="document.getElementById('file-upload').click()">
+                <i class="fas fa-cloud-upload-alt"
+                    style="font-size: 4em; margin-bottom: 15px; color: var(--gold); text-shadow: 0 0 10px var(--gold);"></i>
+                <h3 style="color:var(--white); margin:0;">Upload to Server</h3>
+                <p style="color:#888;">Drop photos/videos or click to browse</p>
+                <input type="file" id="file-upload" hidden accept="image/*,video/*">
+            </div>
+            <div id="upload-status"
+                style="margin-bottom: 20px; color: var(--gold); text-align:center; font-weight:bold;"></div>
+
+            <h3 style="color: var(--gold); border-bottom: 1px solid #333; padding-bottom:10px;">Cloud Gallery</h3>
+            <div id="gallery-grid"
+                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;">
+                <!-- Gallery items -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // --- 3D PARTICLE SYSTEM (Admins get the Blue/Silver Sci-fi Look) ---
+        let scene, camera, renderer, particles;
+        let mouseX = 0, mouseY = 0;
+
+        function init3D() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            const geometry = new THREE.BufferGeometry();
+            const count = 4000; // More density for admin
+            const positions = new Float32Array(count * 3);
+
+            for (let i = 0; i < count * 3; i++) {
+                positions[i] = (Math.random() - 0.5) * 20; // Spread out more
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.03,
+                color: 0xD4AF37,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending
+            });
+
+            particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+
+            camera.position.z = 6;
+
+            document.addEventListener('mousemove', (event) => {
+                mouseX = (event.clientX - window.innerWidth / 2) / 100;
+                mouseY = (event.clientY - window.innerHeight / 2) / 100;
+            });
+        }
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            // More complex rotation for admin "Command Center" feel
+            particles.rotation.y += 0.002;
+            particles.rotation.x += 0.001;
+
+            particles.rotation.x += (mouseY * 0.08 - particles.rotation.x) * 0.05;
+            particles.rotation.y += (mouseX * 0.08 - particles.rotation.y) * 0.05;
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        init3D();
+        animate3D();
+
+        // Custom Cursor
+        const cursor = document.querySelector('.cursor');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        // TABS
+        function switchTab(tabId) {
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabId === 'users') loadUsers();
+            if (tabId === 'gallery') loadGallery();
+        }
+
+        // AUTH CHECK
+        async function checkAdmin() {
+            // Check for the special Admin Token set by login.html
+            const isAdmin = localStorage.getItem('kodesaar_admin') === 'true';
+
+            if (!isAdmin) {
+                alert('ACCESS DENIED: You are not the admin!');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            document.getElementById('admin-user').innerText = 'Admin Access Granted';
+        }
+
+        // LOAD MESSAGES
+        async function loadMessages() {
+            const list = document.getElementById('messages-list');
+            try {
+                const { data, error } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: false });
+
+                if (error) {
+                    list.innerHTML = `<div class="empty-state" style="color: #ff4444; border-color: #ff4444;">
+                        <i class="fas fa-exclamation-triangle"></i> DATABASE ERROR:<br>${error.message}<br><small>Hint: Check RLS Policies in Supabase</small>
+                    </div>`;
+                    return;
+                }
+
+                if (data && data.length > 0) {
+                    list.innerHTML = data.map(msg => `
+                        <div class="message-card" id="msg-${msg.id}">
+                            <div class="msg-header">
+                                <div><span class="msg-name">User: ${msg.name || 'Unknown'}</span><br><small style="color:#666;">${msg.email || 'No email'}</small></div>
+                                <div style="text-align:right;">
+                                    <div style="color:var(--gold); margin-bottom:5px;">${msg.created_at ? new Date(msg.created_at).toLocaleDateString() : 'N/A'}</div>
+                                    <button onclick="deleteMessage('${msg.id}')" class="delete-btn" title="Delete Transmission"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="msg-body">${msg.message}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    list.innerHTML = '<div class="empty-state">No active transmissions received.</div>';
+                }
+            } catch (e) {
+                list.innerHTML = '<div class="empty-state" style="color:red;">Connection Error: ' + e.message + '</div>';
+            }
+        }
+
+        // DELETE MESSAGE
+        async function deleteMessage(id) {
+            if (!confirm('Are you sure you want to delete this transmission? This cannot be undone.')) return;
+
+            try {
+                const { error } = await supabaseClient.from('messages').delete().eq('id', id);
+                if (error) throw error;
+
+                // Remove from UI immediately
+                const el = document.getElementById(`msg-${id}`);
+                if (el) {
+                    el.style.transform = 'scale(0.9) opacity(0)';
+                    setTimeout(() => el.remove(), 300);
+                }
+            } catch (err) {
+                alert('Failed to delete: ' + err.message);
+            }
+        }
+
+        // DELETE MEDIA
+        async function deleteMedia(id) {
+            if (!confirm('Are you sure you want to delete this media item?')) return;
+
+            try {
+                // Delete record from database
+                const { error } = await supabaseClient.from('gallery').delete().eq('id', id);
+                if (error) throw error;
+
+                // Refresh Grid
+                loadGallery();
+            } catch (err) {
+                alert('Failed to delete media: ' + err.message);
+            }
+        }
+
+        // DELETE USER
+        async function deleteUser(id) {
+            if (!confirm('Are you sure you want to delete this user record? This will revoke their access logs.')) return;
+
+            try {
+                const { error } = await supabaseClient.from('users').delete().eq('id', id);
+                if (error) throw error;
+
+                // Refresh the list
+                loadUsers();
+            } catch (err) {
+                alert('Failed to delete user: ' + err.message);
+            }
+        }
+
+        // LOAD USERS
+        async function loadUsers() {
+            const list = document.getElementById('users-list');
+            list.innerHTML = '<tr><td colspan="4" style="text-align:center;">Scanning user database...</td></tr>';
+
+            const { data, error } = await supabaseClient.from('users').select('*').order('last_login', { ascending: false });
+
+            if (error) {
+                list.innerHTML = `<tr><td colspan="4" style="text-align:center; color: #ff4444;">DATABASE ERROR: ${error.message}</td></tr>`;
+                return;
+            }
+
+            if (data && data.length > 0) {
+                list.innerHTML = data.map(user => `
+                    <tr>
+                        <td>${user.name || '<span style="color:#555;">[Redacted]</span>'}</td>
+                        <td style="font-family:monospace;">${user.email}</td>
+                        <td>${new Date(user.last_login).toLocaleString()}</td>
+                        <td>
+                            <button onclick="deleteUser('${user.id}')" class="delete-btn" title="Delete User"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                list.innerHTML = '<tr><td colspan="4" style="text-align:center;">No user logs found.</td></tr>';
+            }
+        }
+
+        // UPLOAD MEDIA
+        const fileInput = document.getElementById('file-upload');
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const status = document.getElementById('upload-status');
+            status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading artifact...';
+
+            try {
+                // 1. Upload to Storage
+                const fileName = `${Date.now()}_${file.name}`;
+                const { data, error } = await supabaseClient.storage
+                    .from('media') // Bucket name
+                    .upload(fileName, file);
+
+                if (error) throw error;
+
+                // 2. Get Public URL
+                const { data: { publicUrl } } = supabaseClient.storage.from('media').getPublicUrl(fileName);
+
+                // 3. Save to Database
+                // Improved Type Detection: Check mime type OR file extension
+                const isImage = file.type.startsWith('image') || /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(file.name);
+
+                await supabaseClient.from('gallery').insert([{
+                    type: isImage ? 'photo' : 'video',
+                    url: publicUrl,
+                    caption: file.name
+                }]);
+
+                status.innerHTML = '<span style="color:#0f0;"><i class="fas fa-check-circle"></i> Upload Complete. Asset Deployed.</span>';
+                loadGallery(); // Refresh
+
+            } catch (err) {
+                status.innerText = 'Upload Failed: ' + err.message;
+                console.error(err);
+            }
+        });
+
+        async function loadGallery() {
+            const grid = document.getElementById('gallery-grid');
+            const { data } = await supabaseClient.from('gallery').select('*').order('created_at', { ascending: false });
+            if (data && data.length > 0) {
+                grid.innerHTML = data.map(item => {
+                    // BRUTE FORCE FIX: Only show video if extension matches video formats. Default to Image.
+                    const url = item.url.toLowerCase();
+                    const isDefiniteVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov') || url.includes('.ogg');
+
+                    return `
+                    <div style="position: relative; transition:all 0.3s; border-radius:10px; overflow:hidden; border:1px solid #333;">
+                        ${isDefiniteVideo
+                            ? `<video src="${item.url}" style="width:100%; height:150px; object-fit:cover; display:block;" controls></video>`
+                            : `<img src="${item.url}" style="width:100%; height:150px; object-fit:cover; display:block;">`
+                        }
+                        <button onclick="deleteMedia('${item.id}')" style="position:absolute; top:5px; right:5px; background:rgba(255,0,0,0.7); color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:3px; font-size:0.8em; backdrop-filter:blur(5px);">DELETE</button>
+                        <div style="padding:10px; background:rgba(0,0,0,0.8); font-size:0.8em; color:#888; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                            ${item.caption}
+                        </div>
+                    </div>
+                `}).join('');
+            }
+        }
+
+        async function logout() {
+            // Clear all tokens
+            localStorage.removeItem('kodesaar_auth');
+            localStorage.removeItem('kodesaar_user');
+            localStorage.removeItem('kodesaar_admin');
+
+            // Sign out of Supabase just in case
+            await supabaseClient.auth.signOut();
+            window.location.href = 'login.html';
+        }
+
+        // Init
+        checkAdmin();
+        loadMessages();
+
+        // LIVE AUTO-REFRESH (Every 5 seconds)
+        setInterval(() => {
+            const activeTab = document.querySelector('.nav-tab.active');
+            if (activeTab && activeTab.innerText.includes('Messages')) {
+                loadMessages();
+            } else if (activeTab && activeTab.innerText.includes('Users')) {
+                loadUsers();
+            }
+        }, 5000);
+
+        // Connection Status check
+        (async function checkConnection() {
+            const { error } = await supabaseClient.from('users').select('count', { count: 'exact', head: true });
+            const statusDiv = document.createElement('div');
+            statusDiv.style.position = 'fixed';
+            statusDiv.style.bottom = '10px';
+            statusDiv.style.right = '10px';
+            statusDiv.style.padding = '5px 10px';
+            statusDiv.style.borderRadius = '20px';
+            statusDiv.style.fontSize = '0.8em';
+            statusDiv.style.zIndex = '1000';
+
+            if (error && error.code !== 'PGRST116') { // Ignore empty result error, care about connection/table errors
+                statusDiv.style.background = 'rgba(255, 0, 0, 0.8)';
+                statusDiv.innerText = '🔴 DISCONNECTED: ' + error.message;
+            } else {
+                statusDiv.style.background = 'rgba(0, 255, 0, 0.2)';
+                statusDiv.style.border = '1px solid #0f0';
+                statusDiv.style.color = '#0f0';
+                statusDiv.innerText = '🟢 SYSTEM ONLINE';
+            }
+            document.body.appendChild(statusDiv);
+        })();
+    </script>
+</body>
+
+</html>
