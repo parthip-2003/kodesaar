@@ -2,15 +2,26 @@
 <html lang="en">
 
 <head>
+    <style>
+        body {
+            display: none;
+        }
+
+        /* Hide until auth check is complete */
+    </style>
     <script>
         // --- STICKY LOGIN SHIELD ---
         if (localStorage.getItem('kodesaar_auth') === 'true') {
-            // Smart Redirect: Admins go to Admin, Visitors go to Home
             if (localStorage.getItem('kodesaar_admin') === 'true') {
                 window.location.replace('admin.html');
             } else {
                 window.location.replace('index.html');
             }
+        } else {
+            // No session, show page
+            window.addEventListener('DOMContentLoaded', () => {
+                document.body.style.display = 'flex';
+            });
         }
     </script>
     <meta charset="UTF-8">
