@@ -5,7 +5,12 @@
     <script>
         // --- STICKY LOGIN SHIELD ---
         if (localStorage.getItem('kodesaar_auth') === 'true') {
-            window.location.replace('index.html');
+            // Smart Redirect: Admins go to Admin, Visitors go to Home
+            if (localStorage.getItem('kodesaar_admin') === 'true') {
+                window.location.replace('admin.html');
+            } else {
+                window.location.replace('index.html');
+            }
         }
     </script>
     <meta charset="UTF-8">
