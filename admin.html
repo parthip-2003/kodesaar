@@ -248,6 +248,8 @@
             }
         }
     </style>
+    <!-- Face Recognition SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 </head>
 
 <body class="dark-theme">
@@ -268,6 +270,7 @@
                 Messages</button>
             <button class="nav-tab" onclick="switchTab('users')"><i class="fas fa-users"></i> Users</button>
             <button class="nav-tab" onclick="switchTab('gallery')"><i class="fas fa-images"></i> Media</button>
+            <button class="nav-tab" onclick="switchTab('security')"><i class="fas fa-shield-alt"></i> Security</button>
         </div>
 
         <!-- MESSAGES SECTION -->
@@ -290,6 +293,40 @@
                     <!-- Populated by JS -->
                 </tbody>
             </table>
+        </div>
+
+        <!-- SECURITY SECTION -->
+        <div id="security" class="section">
+            <div style="max-width: 600px; margin: 0 auto; text-align: center;">
+                <h3 style="color: var(--gold); margin-bottom: 20px;"><i class="fas fa-face-smile"></i> Face Enrollment
+                </h3>
+                <p style="color: #888; margin-bottom: 20px;">Admins can register their face data here to enable
+                    biometric login. Make sure you are in a well-lit area.</p>
+
+                <div
+                    style="position: relative; width: 100%; max-width: 400px; margin: 0 auto; border: 2px solid var(--gold); border-radius: 20px; overflow: hidden; background: #000;">
+                    <video id="enroll-video" autoplay muted playsinline
+                        style="width: 100%; display: block; transform: scaleX(-1);"></video>
+                    <canvas id="enroll-canvas"
+                        style="position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none;"></canvas>
+                    <div id="enroll-status"
+                        style="position: absolute; bottom: 10px; left: 0; width: 100%; text-align: center; color: var(--gold); background: rgba(0,0,0,0.5); padding: 5px; font-size: 0.9em;">
+                        Click Start to Begin</div>
+                </div>
+
+                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="startEnrollment()" class="refresh-btn" id="start-scan-btn">Start Camera</button>
+                    <button onclick="captureFace()" class="refresh-btn" id="capture-btn" disabled
+                        style="opacity: 0.5;">Capture Face</button>
+                </div>
+
+                <div id="enrolled-faces" style="margin-top: 40px;">
+                    <h4 style="color: #666; margin-bottom: 15px;">Registered Admin Slots (Max 8)</h4>
+                    <div id="face-slots" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                        <!-- Slots filled via JS -->
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- GALLERY SECTION -->
@@ -393,7 +430,127 @@
 
             if (tabId === 'users') loadUsers();
             if (tabId === 'gallery') loadGallery();
+            if (tabId === 'security') stopCamera(); // Stop if leaving
         }
+
+        // --- FACE ENROLLMENT LOGIC ---
+        let enrollStream = null;
+        let isFaceDetectionLoaded = false;
+
+        async function loadFaceAPI() {
+            if (isFaceDetectionLoaded) return;
+            const status = document.getElementById('enroll-status');
+            status.innerText = "Loading AI Models...";
+
+            try {
+                // Using face-api.js models from CDN
+                const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+
+                isFaceDetectionLoaded = true;
+                status.innerText = "Models Loaded. Center your face.";
+                document.getElementById('capture-btn').disabled = false;
+                document.getElementById('capture-btn').style.opacity = '1';
+            } catch (err) {
+                status.innerText = "Error loading AI: " + err.message;
+            }
+        }
+
+        async function startEnrollment() {
+            const video = document.getElementById('enroll-video');
+            const btn = document.getElementById('start-scan-btn');
+
+            if (enrollStream) {
+                stopCamera();
+                btn.innerText = "Start Camera";
+                return;
+            }
+
+            try {
+                enrollStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = enrollStream;
+                btn.innerText = "Stop Camera";
+
+                // Load AI Models once camera starts
+                loadFaceAPI();
+            } catch (err) {
+                alert('Camera access denied: ' + err.message);
+            }
+        }
+
+        function stopCamera() {
+            if (enrollStream) {
+                enrollStream.getTracks().forEach(track => track.stop());
+                enrollStream = null;
+                document.getElementById('enroll-video').srcObject = null;
+                document.getElementById('start-scan-btn').innerText = "Start Camera";
+            }
+        }
+
+        async function captureFace() {
+            const video = document.getElementById('enroll-video');
+            const status = document.getElementById('enroll-status');
+
+            status.innerText = "Capturing Face Data...";
+
+            // Detect single face
+            const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+
+            if (!detection) {
+                status.innerText = "Error: Face not detected. Try again.";
+                return;
+            }
+
+            // Save descriptor to Supabase
+            const descriptor = Array.from(detection.descriptor);
+            const fileName = `admin_${Date.now()}.json`;
+            const fileBody = JSON.stringify({
+                descriptor: descriptor,
+                admin_name: localStorage.getItem('kodesaar_user') || 'Admin'
+            });
+
+            try {
+                const { error } = await supabaseClient.storage
+                    .from('admin_faces')
+                    .upload(fileName, new Blob([fileBody], { type: 'application/json' }));
+
+                if (error) throw error;
+
+                status.innerText = "✅ Enrollment Successful!";
+                loadFaceSlots();
+            } catch (err) {
+                status.innerText = "Upload failed: " + err.message;
+            }
+        }
+
+        async function loadFaceSlots() {
+            const slots = document.getElementById('face-slots');
+            const { data, error } = await supabaseClient.storage.from('admin_faces').list();
+
+            if (error) return;
+
+            slots.innerHTML = data.map((file, index) => `
+                <div style="background: rgba(212,175,55,0.1); border: 1px solid var(--gold); padding: 10px; border-radius: 10px; font-size: 0.8em; color: var(--gold);">
+                    <i class="fas fa-id-card"></i> Admin ${index + 1}<br>
+                    <button onclick="deleteFace('${file.name}')" style="background:none; border:none; color:red; cursor:pointer; margin-top:5px; font-size:0.9em;">Remove</button>
+                </div>
+            `).join('');
+
+            // Fill remaining slots
+            for (let i = data.length; i < 8; i++) {
+                slots.innerHTML += `<div style="border: 1px dashed #444; padding: 10px; border-radius: 10px; font-size: 0.8em; color: #444;">Empty Slot</div>`;
+            }
+        }
+
+        async function deleteFace(name) {
+            if (!confirm('Revoke this admin face access?')) return;
+            await supabaseClient.storage.from('admin_faces').remove([name]);
+            loadFaceSlots();
+        }
+
+        loadFaceSlots(); // Initial load
 
         // AUTH CHECK (Immediate Execution)
         function checkAdmin() {

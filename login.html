@@ -42,6 +42,8 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_aWd31fqNw-4w6Dwk-sD8CQ_umT2tBhZ';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     </script>
+    <!-- Face Recognition SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 </head>
 
 <body>
@@ -76,7 +78,28 @@
                 <button id="admin-mode-btn">Admin Login</button>
             </div>
 
+            <!-- Face ID Trigger -->
+            <div class="face-id-container">
+                <p style="margin-bottom: 5px;">Or Use Biometrics</p>
+                <div class="face-id-trigger" onclick="startFaceScan()">
+                    <i class="fas fa-face-smile"></i>
+                </div>
+            </div>
+
         </div>
+    </div>
+
+    <!-- Face Scan Overlay -->
+    <div class="face-scan-overlay" id="face-scan">
+        <div class="scan-box">
+            <video id="scan-video" autoplay muted playsinline
+                style="width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); position: absolute; top:0; left:0;"></video>
+            <i class="fas fa-user face-silhouette"></i>
+            <div class="scan-line"></div>
+        </div>
+        <div class="scan-text">Initializing AI Vision...</div>
+        <button onclick="stopFaceScan()"
+            style="margin-top:20px; background:none; border:1px solid #444; color:#888; padding:5px 15px; border-radius:5px; cursor:pointer;">Cancel</button>
     </div>
 
     <!-- Three.js Library -->
@@ -171,6 +194,7 @@
 
                 btn.querySelector('span').innerText = 'Admin Login';
                 toggleBtn.innerText = 'Back to Visitor Access';
+                document.querySelector('.face-id-container').style.display = 'flex';
             } else {
                 // Switch to Visitor
                 document.getElementById('name').parentElement.style.display = 'block';
@@ -183,8 +207,103 @@
 
                 btn.querySelector('span').innerText = 'Login';
                 toggleBtn.innerText = 'Admin Login';
+                document.querySelector('.face-id-container').style.display = 'none';
             }
         });
+
+        // --- REAL AI FACE RECOGNITION ---
+        let scanStream = null;
+        let faceMatcher = null;
+
+        async function loadStoredFaceData() {
+            const { data, error } = await supabaseClient.storage.from('admin_faces').list();
+            if (error || !data || data.length === 0) return null;
+
+            const labeledDescriptors = [];
+
+            for (const file of data) {
+                try {
+                    const { data: fileData, error: downloadError } = await supabaseClient.storage
+                        .from('admin_faces')
+                        .download(file.name);
+
+                    if (downloadError) continue;
+
+                    const json = JSON.parse(await fileData.text());
+                    const descriptor = new Float32Array(json.descriptor);
+                    labeledDescriptors.push(new faceapi.LabeledFaceDescriptors(json.admin_name, [descriptor]));
+                } catch (e) { console.error("Error loading face:", e); }
+            }
+
+            return labeledDescriptors.length > 0 ? new faceapi.FaceMatcher(labeledDescriptors, 0.6) : null;
+        }
+
+        async function startFaceScan() {
+            const overlay = document.getElementById('face-scan');
+            const video = document.getElementById('scan-video');
+            const status = document.querySelector('.scan-text');
+
+            overlay.style.display = 'flex';
+            status.innerText = "Initializing AI Vision...";
+
+            try {
+                // 1. Load Models
+                const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+
+                status.innerText = "Loading Admin Profiles...";
+                faceMatcher = await loadStoredFaceData();
+
+                if (!faceMatcher) {
+                    status.innerText = "Error: No Admin Faces Registered.";
+                    setTimeout(stopFaceScan, 3000);
+                    return;
+                }
+
+                // 2. Start Camera
+                scanStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = scanStream;
+
+                status.innerText = "Scanning... Center your face";
+
+                // 3. Verification Loop
+                const interval = setInterval(async () => {
+                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                        .withFaceLandmarks()
+                        .withFaceDescriptor();
+
+                    if (detection) {
+                        const result = faceMatcher.findBestMatch(detection.descriptor);
+
+                        if (result.label !== 'unknown') {
+                            clearInterval(interval);
+                            status.innerHTML = `Welcome ${result.label} <i class="fas fa-check-circle" style="color:var(--gold);"></i>`;
+
+                            setTimeout(() => {
+                                localStorage.setItem('kodesaar_auth', 'true');
+                                localStorage.setItem('kodesaar_admin', 'true');
+                                localStorage.setItem('kodesaar_user', result.label);
+                                window.location.replace('admin.html');
+                            }, 1000);
+                        }
+                    }
+                }, 500);
+
+            } catch (err) {
+                status.innerText = "Error: " + err.message;
+                setTimeout(stopFaceScan, 3000);
+            }
+        }
+
+        function stopFaceScan() {
+            if (scanStream) {
+                scanStream.getTracks().forEach(track => track.stop());
+                scanStream = null;
+            }
+            document.getElementById('face-scan').style.display = 'none';
+        }
 
         // Submit Logic
         form.addEventListener('submit', async (e) => {

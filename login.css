@@ -195,3 +195,127 @@ p {
     text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
     transform: scale(1.05);
 }
+
+/* Face ID UI */
+.face-id-container {
+    margin-top: 15px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    animation: fadeInFace 0.5s ease forwards;
+}
+
+.face-id-trigger {
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: var(--gold);
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.face-id-trigger:hover {
+    background: rgba(212, 175, 55, 0.2);
+    transform: scale(1.1);
+}
+
+/* Scanning Overlay */
+.face-scan-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.scan-box {
+    width: 250px;
+    height: 250px;
+    border: 2px solid rgba(212, 175, 55, 0.3);
+    border-radius: 40px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.1);
+}
+
+.scan-line {
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: var(--gold);
+    top: -2px;
+    left: 0;
+    box-shadow: 0 0 15px var(--gold);
+    animation: scanMove 2s linear infinite;
+}
+
+.face-silhouette {
+    font-size: 150px;
+    color: rgba(212, 175, 55, 0.1);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.scan-text {
+    margin-top: 30px;
+    font-family: var(--font-heading);
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-size: 18px;
+    animation: pulseScan 1.5s ease-in-out infinite;
+}
+
+@keyframes scanMove {
+    0% {
+        top: 0%;
+    }
+
+    50% {
+        top: 100%;
+    }
+
+    100% {
+        top: 0%;
+    }
+}
+
+@keyframes pulseScan {
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInFace {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
