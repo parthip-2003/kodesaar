@@ -707,7 +707,7 @@
             const progressContainer = document.getElementById('progress-container');
             const progressBar = document.getElementById('progress-bar');
 
-            status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing high-speed transmission...';
+            status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deploying to Server...';
             progressContainer.style.display = 'block';
             progressBar.style.width = '0%';
 
@@ -735,7 +735,12 @@
                     if (progress <= 90) progressBar.style.width = progress + '%';
                 }, 200);
 
-                if (error) throw error;
+                if (error) {
+                    if (error.message.includes('size')) {
+                        throw new Error("File too large for Supabase. You need to increase the 'Maximum File Size' in your Supabase Dashboard (Storage Settings).");
+                    }
+                    throw error;
+                }
 
                 // 2. Get Public URL
                 const { data: { publicUrl } } = supabaseClient.storage.from('media').getPublicUrl(fileName);
